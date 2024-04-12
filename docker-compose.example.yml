@@ -1,0 +1,41 @@
+version: '3.8'
+services:
+  app:
+    image: your/app:latest
+    ports:
+      - "5000:5000"
+    environment:
+      - ENV_SECRETS_DEBUG=true
+      - DB_NAME=my_database
+      # using the DOCKER-SECRET->secret_key syntax
+      - DB_USERNAME_FILE=DOCKER-SECRET->db_username
+      - DB_PASSWORD_FILE=DOCKER-SECRET->db_password
+    secrets:
+      - db_username
+      - db_password
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=my_database
+      # using the _FILE suffix to indicate that the value is a file path
+      - POSTGRES_USER_FILE=/run/secrets/db_username
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    secrets:
+      - db_username
+      - db_password
+    restart: always
+
+secrets:
+  db_username:
+    external: true
+  db_password:
+    external: true
+
+volumes:
+  db_data:
